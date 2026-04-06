@@ -1,3 +1,6 @@
+# Copyright (c) 2026 SMK Hidayah. All rights reserved.
+# This file is part of QR Reader Attendance System
+
 from datetime import datetime, timedelta
 from app.models.attendance import Attendance
 from app.models.user import User

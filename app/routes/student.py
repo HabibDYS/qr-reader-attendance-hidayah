@@ -1,3 +1,6 @@
+# Copyright (c) 2026 SMK Hidayah. All rights reserved.
+# This file is part of QR Reader Attendance System
+
 from flask import Blueprint, render_template, flash, redirect, url_for, current_app, request, send_file
 from flask_login import login_required, current_user
 from app.models import User, Attendance

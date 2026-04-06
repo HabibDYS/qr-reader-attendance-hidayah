@@ -1,3 +1,6 @@
+# Copyright (c) 2026 SMK Hidayah. All rights reserved.
+# This file is part of QR Reader Attendance System
+
 from flask import Blueprint, render_template, jsonify, request, redirect, url_for, send_file, flash, current_app
 from flask_login import login_required, current_user
 from app.models.user import User
@@ -8,6 +11,7 @@ import pandas as pd
 import io
 import os
 import logging
+import qrcode
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -162,6 +166,66 @@ def export_attendance():
         as_attachment=True,
         download_name=f'attendance_report_{start_date}_to_{end_date}.xlsx'
     )
+
+@bp.route('/register-student', methods=['GET', 'POST'])
+@admin_required
+def register_student():
+    """Register a new student from admin panel."""
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name')
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            
+            # Validate input
+            if not all([name, username, email, password]):
+                flash('All fields are required', 'danger')
+                return redirect(url_for('admin.register_student'))
+            
+            # Check if username or email already exists
+            if User.query.filter_by(username=username).first():
+                flash('Username already exists', 'danger')
+                return redirect(url_for('admin.register_student'))
+                
+            if User.query.filter_by(email=email).first():
+                flash('Email already registered', 'danger')
+                return redirect(url_for('admin.register_student'))
+            
+            # Create new student user
+            user = User(
+                name=name,
+                username=username,
+                email=email,
+                role='student'
+            )
+            user.set_password(password)
+            
+            # Generate QR code
+            qr = qrcode.QRCode(version=1, box_size=10, border=5)
+            qr.add_data(username)
+            qr.make(fit=True)
+            qr_image = qr.make_image(fill_color="black", back_color="white")
+            
+            # Save QR code
+            qr_filename = f'qr_{username}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.png'
+            qr_path = os.path.join('app', 'static', 'qrcodes', qr_filename)
+            os.makedirs(os.path.dirname(qr_path), exist_ok=True)
+            qr_image.save(qr_path)
+            
+            user.qr_code = qr_filename
+            db.session.add(user)
+            db.session.commit()
+            
+            flash(f'Student {name} ({username}) registered successfully!', 'success')
+            return redirect(url_for('admin.register_student'))
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error registering student: {str(e)}")
+            flash('An error occurred while registering the student', 'danger')
+            return redirect(url_for('admin.register_student'))
+    
+    return render_template('admin/register_student.html')
 
 @bp.route('/mark-attendance', methods=['POST'])
 @admin_required

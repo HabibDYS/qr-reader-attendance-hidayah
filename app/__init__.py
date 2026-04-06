@@ -1,3 +1,6 @@
+# Copyright (c) 2026 SMK Hidayah. All rights reserved.
+# This file is part of QR Reader Attendance System
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager

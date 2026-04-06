@@ -1,3 +1,5 @@
+<!-- Copyright (c) 2026 SMK Hidayah. All rights reserved. -->
+<!-- This file is part of QR Reader Attendance System -->
 {% extends "base.html" %}
 
 {% block title %}{{ role|title }} Login - QR Attendance System{% endblock %}
@@ -44,7 +46,6 @@
                     <p>Not an admin? <a href="{{ url_for('auth.login', role='student') }}">Student login</a></p>
                 {% else %}
                     <p>Not a student? <a href="{{ url_for('auth.login', role='admin') }}">Admin login</a></p>
-                    <p>New student? <a href="{{ url_for('auth.register') }}">Register here</a></p>
                 {% endif %}
             </div>
         </div>

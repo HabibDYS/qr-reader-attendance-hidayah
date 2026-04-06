@@ -1,8 +1,11 @@
+# Copyright (c) 2026 SMK Hidayah. All rights reserved.
+# This file is part of QR Reader Attendance System
+
 import os
 
 class Config:
     # Basic Flask configuration
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-secret-key-here'
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'Hoshimachi Suisei is the best waifu'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + os.path.abspath(os.path.join(os.path.dirname(__file__), 'instance', 'attendance.db'))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
@@ -12,12 +15,12 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     
     # Admin configuration
-    ADMIN_REGISTRATION_KEY = os.environ.get('ADMIN_REGISTRATION_KEY') or 'admin123'  # Default key for development
+    ADMIN_REGISTRATION_KEY = os.environ.get('ADMIN_REGISTRATION_KEY') or 'Cheese borger'  # Default key for development
     
     # Attendance configuration
-    LATE_THRESHOLD_HOUR = 9  # 9:00 AM
+    LATE_THRESHOLD_HOUR = 7  # 7:00 AM Jakarta time - attendance after this is marked as late
     LATE_THRESHOLD_MINUTE = 0
-    EARLY_LEAVE_THRESHOLD_HOUR = 17  # 5:00 PM
+    EARLY_LEAVE_THRESHOLD_HOUR = 15  # 5:00 PM
     EARLY_LEAVE_THRESHOLD_MINUTE = 0
     
     # Application settings

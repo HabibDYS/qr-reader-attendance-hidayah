@@ -1,12 +1,19 @@
+<!-- Copyright (c) 2026 SMK Hidayah. All rights reserved. -->
+<!-- This file is part of QR Reader Attendance System -->
 {% extends "base.html" %}
 
 {% block title %}Admin Portal{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="h3 mb-4">Admin Dashboard</h1>
+    <div class="row mb-4">
+        <div class="col-6">
+            <h1 class="h3 mb-0">Admin Dashboard</h1>
+        </div>
+        <div class="col-6 text-end">
+            <a href="https://wa.me/6288238122028?text=Halo%20Habibi%2C%20saya%20ingin%20melaporkan%20bug%20di%20sistem%20kehadiran" class="btn btn-success" target="_blank">
+                <i class="fab fa-whatsapp me-2"></i>Chat Developer
+            </a>
         </div>
     </div>
 
@@ -53,10 +60,13 @@
                         <a href="{{ url_for('admin.scan_attendance') }}" class="btn btn-primary">
                             <i class="fas fa-qrcode me-2"></i>Scan QR Code
                         </a>
+                        <a href="{{ url_for('admin.register_student') }}" class="btn btn-success">
+                            <i class="fas fa-user-plus me-2"></i>Register Student
+                        </a>
                         <a href="{{ url_for('admin.view_attendance') }}" class="btn btn-info">
                             <i class="fas fa-list me-2"></i>View Attendance Records
                         </a>
-                        <a href="{{ url_for('admin.generate_report') }}" class="btn btn-success">
+                        <a href="{{ url_for('admin.generate_report') }}" class="btn btn-warning">
                             <i class="fas fa-file-excel me-2"></i>Generate Report
                         </a>
                     </div>

@@ -46,7 +46,7 @@ def reset_database():
             db.session.commit()
             print("Created initial admin user (username: admin, password: admin123)")
         else:
-            print("Admin user already exists")
+            print("Admin user already exists") 
 
 if __name__ == '__main__':
     reset_database() 
