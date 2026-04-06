@@ -91,8 +91,21 @@ def view_attendance():
 @bp.route('/student-list')
 @admin_required
 def student_list():
-    """View list of all students."""
-    students = User.query.filter_by(role='student').all()
+    """View list of all students with search functionality."""
+    search_query = request.args.get('search', '').strip()
+    
+    if search_query:
+        students = User.query.filter(
+            User.role == 'student',
+            db.or_(
+                User.name.ilike(f'%{search_query}%'),
+                User.username.ilike(f'%{search_query}%'),
+                User.email.ilike(f'%{search_query}%')
+            )
+        ).all()
+    else:
+        students = User.query.filter_by(role='student').all()
+    
     return render_template('admin/students.html', students=students)
 
 @bp.route('/generate-report', methods=['GET', 'POST'])
@@ -286,4 +299,100 @@ def mark_attendance():
     except Exception as e:
         logger.error(f"Error marking attendance: {str(e)}")
         db.session.rollback()
-        return jsonify({'success': False, 'message': 'An error occurred while marking attendance'}), 500 
+        return jsonify({'success': False, 'message': 'An error occurred while marking attendance'}), 500
+
+@bp.route('/student/<int:student_id>')
+@admin_required
+def view_student(student_id):
+    """View detailed information about a specific student."""
+    student = User.query.get_or_404(student_id)
+    if student.role != 'student':
+        flash('User is not a student', 'danger')
+        return redirect(url_for('admin.student_list'))
+    
+    # Get attendance statistics
+    today = datetime.now().date()
+    month_start = today.replace(day=1)
+    
+    attendance_records = Attendance.query.filter_by(user_id=student_id).order_by(Attendance.date.desc()).limit(10).all()
+    
+    total_attendance = Attendance.query.filter_by(user_id=student_id, status='present').count()
+    total_late = Attendance.query.filter_by(user_id=student_id, status='late').count()
+    total_absent = Attendance.query.filter_by(user_id=student_id, status='absent').count()
+    
+    month_attendance = Attendance.query.filter(
+        Attendance.user_id == student_id,
+        Attendance.date >= month_start,
+        Attendance.date <= today
+    ).count()
+    
+    stats = {
+        'total_present': total_attendance,
+        'total_late': total_late,
+        'total_absent': total_absent,
+        'month_attendance': month_attendance
+    }
+    
+    return render_template('admin/view_student.html', 
+                         student=student, 
+                         attendance_records=attendance_records,
+                         stats=stats)
+
+@bp.route('/student/<int:student_id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_student(student_id):
+    """Edit student information."""
+    student = User.query.get_or_404(student_id)
+    if student.role != 'student':
+        flash('User is not a student', 'danger')
+        return redirect(url_for('admin.student_list'))
+    
+    if request.method == 'POST':
+        try:
+            name = request.form.get('name')
+            email = request.form.get('email')
+            
+            if not name or not email:
+                flash('Name and email are required', 'danger')
+                return redirect(url_for('admin.edit_student', student_id=student_id))
+            
+            # Check if email is already used by another user
+            existing_email = User.query.filter(User.email == email, User.id != student_id).first()
+            if existing_email:
+                flash('Email is already taken', 'danger')
+                return redirect(url_for('admin.edit_student', student_id=student_id))
+            
+            student.name = name
+            student.email = email
+            
+            db.session.commit()
+            flash('Student information updated successfully', 'success')
+            return redirect(url_for('admin.view_student', student_id=student_id))
+        except Exception as e:
+            logger.error(f"Error updating student: {str(e)}")
+            db.session.rollback()
+            flash('An error occurred while updating student information', 'danger')
+            return redirect(url_for('admin.edit_student', student_id=student_id))
+    
+    return render_template('admin/edit_student.html', student=student)
+
+@bp.route('/student/<int:student_id>/delete', methods=['POST'])
+@admin_required
+def delete_student(student_id):
+    """Delete a student and all their records."""
+    student = User.query.get_or_404(student_id)
+    if student.role != 'student':
+        flash('User is not a student', 'danger')
+        return redirect(url_for('admin.student_list'))
+    
+    try:
+        student_name = student.name
+        db.session.delete(student)
+        db.session.commit()
+        flash(f'Student {student_name} has been deleted successfully', 'success')
+    except Exception as e:
+        logger.error(f"Error deleting student: {str(e)}")
+        db.session.rollback()
+        flash('An error occurred while deleting the student', 'danger')
+    
+    return redirect(url_for('admin.student_list')) 

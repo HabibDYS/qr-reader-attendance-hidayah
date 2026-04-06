@@ -1,13 +1,16 @@
 # Copyright (c) 2026 SMK Hidayah. All rights reserved.
 # This file is part of QR Reader Attendance System
 
-from flask import Blueprint, render_template, flash, redirect, url_for, current_app, request, send_file
+from flask import Blueprint, render_template, flash, redirect, url_for, current_app, request, send_file, jsonify
 from flask_login import login_required, current_user
 from app.models import User, Attendance
 from app.utils.qr_generator import generate_qr_code
+from app.utils.attendance import calculate_attendance_stats
 from datetime import datetime, timedelta
 import os
 import logging
+import pandas as pd
+import io
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -154,4 +157,116 @@ def student_dashboard():
     return render_template('student_dashboard.html',
                          attendance_records=attendance_records,
                          stats=stats,
-                         today_attendance=today_attendance) 
+                         today_attendance=today_attendance)
+
+@student_bp.route('/export-attendance')
+@login_required
+def export_attendance():
+    """Export student attendance records as CSV"""
+    if current_user.role != 'student':
+        flash('Access denied. Students only.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    try:
+        # Get all attendance records for the student
+        attendance_records = Attendance.query.filter_by(
+            user_id=current_user.id
+        ).order_by(Attendance.date.desc()).all()
+        
+        # Create DataFrame
+        data = []
+        for record in attendance_records:
+            data.append({
+                'Tanggal': record.date.strftime('%Y-%m-%d'),
+                'Nama Siswa': current_user.name,
+                'Username': current_user.username,
+                'Check-In': record.check_in.strftime('%H:%M:%S') if record.check_in else 'N/A',
+                'Check-Out': record.check_out.strftime('%H:%M:%S') if record.check_out else 'N/A',
+                'Status': record.status
+            })
+        
+        df = pd.DataFrame(data)
+        
+        # Create CSV in memory
+        output = io.StringIO()
+        df.to_csv(output, index=False, encoding='utf-8-sig')
+        output.seek(0)
+        
+        return send_file(
+            io.BytesIO(output.getvalue().encode('utf-8-sig')),
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'attendance_{current_user.username}_{datetime.now().strftime("%Y%m%d")}.csv'
+        )
+    except Exception as e:
+        logger.error(f"Error exporting attendance: {str(e)}")
+        flash('Error exporting attendance. Please try again.', 'danger')
+        return redirect(url_for('student.student_dashboard'))
+
+@student_bp.route('/share-attendance')
+@login_required
+def share_attendance():
+    """Generate shareable link for attendance report"""
+    if current_user.role != 'student':
+        flash('Access denied. Students only.', 'danger')
+        return redirect(url_for('main.index'))
+    
+    try:
+        # Get attendance summary
+        end_date = datetime.now().date()
+        start_date = end_date - timedelta(days=30)
+        
+        attendance_records = Attendance.query.filter(
+            Attendance.user_id == current_user.id,
+            Attendance.date >= start_date,
+            Attendance.date <= end_date
+        ).all()
+        
+        # Calculate stats
+        total_days = len(attendance_records)
+        present_days = len([a for a in attendance_records if a.status == 'present'])
+        late_days = len([a for a in attendance_records if a.status == 'late'])
+        absent_days = len([a for a in attendance_records if a.status == 'absent'])
+        
+        attendance_rate = (present_days / total_days * 100) if total_days > 0 else 0
+        
+        # Create shareable message
+        share_message = f"""
+Laporan Kehadiran Siswa
+====================
+Nama: {current_user.name}
+Username: {current_user.username}
+Email: {current_user.email}
+
+Periode: {start_date} - {end_date}
+
+📊 Statistik:
+- Total Hari: {total_days}
+- Hadir: {present_days} hari
+- Terlambat: {late_days} hari
+- Absen: {absent_days} hari
+- Tingkat Kehadiran: {attendance_rate:.1f}%
+
+Dibuat: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+"""
+        
+        # Return as JSON for easy sharing
+        return jsonify({
+            'success': True,
+            'message': share_message,
+            'data': {
+                'nama': current_user.name,
+                'username': current_user.username,
+                'total': total_days,
+                'hadir': present_days,
+                'terlambat': late_days,
+                'absen': absent_days,
+                'tingkat_kehadiran': f"{attendance_rate:.1f}%"
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error generating share data: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Error generating share data'
+        }), 500 

@@ -1,0 +1,65 @@
+<!-- Copyright (c) 2026 SMK Hidayah. All rights reserved. -->
+<!-- This file is part of QR Reader Attendance System -->
+{% extends "base.html" %}
+
+{% block title %}Edit Student - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Edit Student Information</h1>
+                <a href="{{ url_for('admin.view_student', student_id=student.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back
+                </a>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit {{ student.name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin.edit_student', student_id=student.id) }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ student.name }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ student.username }}" disabled>
+                            <small class="text-muted">Username cannot be changed</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ student.email }}" required>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> You can only edit the name and email address. 
+                            To change the password, the student should use the "Forgot Password" feature.
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                            <a href="{{ url_for('admin.view_student', student_id=student.id) }}" class="btn btn-light">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
