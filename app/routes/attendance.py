@@ -47,38 +47,71 @@ def process_qr():
         today = datetime.now().date()
         current_time = datetime.now()
         
-        # Check if already marked attendance for today
-        attendance = Attendance.get_user_attendance(user.id, today)
+        # Get or create attendance record for today with lock
+        attendance = Attendance.query.filter_by(user_id=user.id, date=today).first()
         
-        if attendance:
-            if not attendance.check_out:
-                attendance.check_out = current_time
-                db.session.commit()
-                return jsonify({
-                    'success': True,
-                    'message': f'Check-out recorded for {user.name}',
-                    'type': 'checkout'
-                })
-            else:
-                return jsonify({
-                    'success': False,
-                    'message': 'Attendance already marked for today'
-                })
-        else:
-            # Create new attendance record
+        if not attendance:
+            # First scan - record check-in
             attendance = Attendance(
                 user_id=user.id,
-                check_in=current_time,
                 date=today,
-                status='present' if current_time.hour < 9 else 'late'
+                check_in=current_time,
+                status='present' if current_time.hour < 7 else 'late'
             )
             db.session.add(attendance)
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                # Someone else might have created the record, try again
+                attendance = Attendance.query.filter_by(user_id=user.id, date=today).first()
+                if attendance and attendance.check_in and not attendance.check_out:
+                    # The other request was a check-out, so proceed with check-out
+                    attendance.check_out = current_time
+                    attendance.update_status()
+                    db.session.commit()
+                    return jsonify({
+                        'success': True,
+                        'message': f'Check-out recorded for {user.name} at {current_time.strftime("%H:%M:%S")}',
+                        'type': 'checkout'
+                    })
+                elif attendance and not attendance.check_in:
+                    # Try to set check-in again
+                    attendance.check_in = current_time
+                    db.session.commit()
+                    return jsonify({
+                        'success': True,
+                        'message': f'Check-in recorded for {user.name} at {current_time.strftime("%H:%M:%S")}',
+                        'type': 'checkin'
+                    })
+            
+            return jsonify({
+                'success': True,
+                'message': f'Check-in recorded for {user.name} at {current_time.strftime("%H:%M:%S")}',
+                'type': 'checkin'
+            })
+        elif attendance.check_in and not attendance.check_out:
+            # Second scan - record check-out
+            attendance.check_out = current_time
+            attendance.update_status()
             db.session.commit()
             
             return jsonify({
                 'success': True,
-                'message': f'Check-in recorded for {user.name}',
-                'type': 'checkin'
+                'message': f'Check-out recorded for {user.name} at {current_time.strftime("%H:%M:%S")}',
+                'type': 'checkout'
+            })
+        elif attendance.check_in and attendance.check_out:
+            # Attendance already completed
+            return jsonify({
+                'success': False,
+                'message': f'Attendance already completed for {user.name} today'
+            })
+        else:
+            # Shouldn't happen, but handle it
+            return jsonify({
+                'success': False,
+                'message': 'Error processing attendance record'
             })
             
     except Exception as e:

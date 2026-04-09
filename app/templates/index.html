@@ -28,11 +28,8 @@
                         <li><i class="fas fa-check text-success me-2"></i>Monitor attendance statistics</li>
                     </ul>
                     <div class="mt-4">
-                        <a href="{{ url_for('auth.login', role='admin') }}" class="btn btn-primary btn-lg me-2">
+                        <a href="{{ url_for('auth.login', role='admin') }}" class="btn btn-primary btn-lg w-100">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
-                        </a>
-                        <a href="{{ url_for('auth.admin_register') }}" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>Register
                         </a>
                     </div>
                 </div>
@@ -55,11 +52,8 @@
                         <li><i class="fas fa-check text-success me-2"></i>View attendance history</li>
                     </ul>
                     <div class="mt-4">
-                        <a href="{{ url_for('auth.login', role='student') }}" class="btn btn-success btn-lg me-2">
+                        <a href="{{ url_for('auth.login', role='student') }}" class="btn btn-success btn-lg w-100">
                             <i class="fas fa-sign-in-alt me-2"></i>Login
-                        </a>
-                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-success btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>Register
                         </a>
                     </div>
                 </div>

@@ -3,17 +3,72 @@
 {% block title %}Scan QR Code - QR Attendance System{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title text-center mb-4">
-                    <i class="fas fa-camera me-2"></i>Scan QR Code
-                </h5>
-                <div class="text-center mb-3">
-                    <video id="qr-video" class="img-fluid rounded" style="max-width: 640px;"></video>
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-qrcode me-2"></i>Scan QR Code for Attendance
+                    </h5>
                 </div>
-                <div id="qr-result" class="alert d-none"></div>
+                <div class="card-body">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="camera-tab" data-bs-toggle="tab" data-bs-target="#camera" type="button" role="tab">
+                                <i class="fas fa-camera me-2"></i>Camera
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">
+                                <i class="fas fa-upload me-2"></i>Upload File
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab content -->
+                    <div class="tab-content">
+                        <!-- Camera Tab -->
+                        <div class="tab-pane fade show active" id="camera" role="tabpanel">
+                            <div class="text-center mb-3">
+                                <video id="qr-video" class="img-fluid rounded" style="max-width: 100%; max-height: 500px; border: 2px solid #ddd;"></video>
+                            </div>
+                            <div id="qr-result" class="alert d-none" role="alert"></div>
+                            <div id="qr-status" class="text-center text-muted mt-3">
+                                <small>Waiting to scan QR code...</small>
+                            </div>
+                        </div>
+
+                        <!-- File Upload Tab -->
+                        <div class="tab-pane fade" id="upload" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="qr-file" class="form-label">Select QR Code Image</label>
+                                <input class="form-control" type="file" id="qr-file" accept="image/*">
+                                <small class="text-muted">Supported formats: JPG, PNG, GIF, BMP</small>
+                            </div>
+                            <div id="qr-file-result" class="alert d-none" role="alert"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Instructions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li><strong>First Scan:</strong> Scan your QR code when you arrive (Check-in)</li>
+                        <li><strong>Second Scan:</strong> Scan your QR code when you leave (Check-out)</li>
+                        <li>Position your QR code clearly in front of the camera</li>
+                        <li>Ensure proper lighting for better scanning accuracy</li>
+                        <li>You can also upload a QR code image file instead of using the camera</li>
+                    </ol>
+                </div>
             </div>
         </div>
     </div>
@@ -25,7 +80,13 @@
 document.addEventListener('DOMContentLoaded', function() {
     const video = document.getElementById('qr-video');
     const resultDiv = document.getElementById('qr-result');
+    const statusDiv = document.getElementById('qr-status');
+    const fileInput = document.getElementById('qr-file');
+    const fileResultDiv = document.getElementById('qr-file-result');
+    let lastScanTime = 0;
+    let isProcessing = false;
 
+    // Camera scanning
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
         .then(function(stream) {
             video.srcObject = stream;
@@ -35,13 +96,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
             
-            // Process frames every 100ms
+            // Process frames every 1 second to avoid too many requests
             setInterval(() => {
+                if (isProcessing) return;
+                
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
+                // Debounce scans - only process if at least 3 seconds since last scan
+                const now = Date.now();
+                if (now - lastScanTime < 3000) {
+                    return;
+                }
+                
                 // Send frame to server
+                isProcessing = true;
                 fetch("{{ url_for('attendance.process_qr') }}", {
                     method: 'POST',
                     headers: {
@@ -53,26 +123,104 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .then(response => response.json())
                 .then(data => {
+                    isProcessing = false;
                     if (data.success) {
-                        resultDiv.textContent = data.message;
+                        lastScanTime = now;
+                        resultDiv.innerHTML = '<strong>' + (data.type === 'checkin' ? '<i class="fas fa-sign-in-alt me-2"></i>Check-In Successful' : '<i class="fas fa-sign-out-alt me-2"></i>Check-Out Successful') + '</strong><br>' + data.message;
                         resultDiv.classList.remove('d-none', 'alert-danger');
                         resultDiv.classList.add('alert-success');
                         
+                        statusDiv.textContent = '';
+                        
                         // Redirect to dashboard after successful scan
                         setTimeout(() => {
-                            window.location.href = "{{ url_for('main.dashboard') }}";
+                            window.location.href = "{{ url_for('main.student_dashboard') }}";
                         }, 2000);
+                    } else {
+                        resultDiv.textContent = data.message;
+                        resultDiv.classList.remove('d-none', 'alert-success');
+                        resultDiv.classList.add('alert-danger');
                     }
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    isProcessing = false;
+                    console.error('Error:', error);
+                    statusDiv.textContent = 'Scanning...';
+                });
             }, 1000);
         })
         .catch(function(err) {
-            resultDiv.textContent = "Error accessing camera. Please make sure you have granted camera permissions.";
+            resultDiv.textContent = "❌ Error accessing camera. Please make sure you have granted camera permissions.";
             resultDiv.classList.remove('d-none');
             resultDiv.classList.add('alert-danger');
             console.error(err);
         });
+
+    // File upload scanning
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Debounce - prevent processing same file twice
+        const now = Date.now();
+        if (now - lastScanTime < 3000) {
+            fileResultDiv.textContent = 'Please wait before scanning again';
+            fileResultDiv.classList.remove('d-none', 'alert-success');
+            fileResultDiv.classList.add('alert-danger');
+            return;
+        }
+
+        // Prevent double processing
+        if (isProcessing) {
+            fileResultDiv.textContent = 'Processing previous scan, please wait...';
+            fileResultDiv.classList.remove('d-none', 'alert-success');
+            fileResultDiv.classList.add('alert-info');
+            return;
+        }
+
+        isProcessing = true;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            fetch("{{ url_for('attendance.process_qr') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image: event.target.result
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                isProcessing = false;
+                fileInput.value = ''; // Clear file input
+                
+                if (data.success) {
+                    lastScanTime = now;
+                    fileResultDiv.innerHTML = '<strong>' + (data.type === 'checkin' ? '<i class="fas fa-sign-in-alt me-2"></i>Check-In Successful' : '<i class="fas fa-sign-out-alt me-2"></i>Check-Out Successful') + '</strong><br>' + data.message;
+                    fileResultDiv.classList.remove('d-none', 'alert-danger');
+                    fileResultDiv.classList.add('alert-success');
+                    
+                    // Redirect to dashboard after successful scan
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('main.student_dashboard') }}";
+                    }, 2000);
+                } else {
+                    fileResultDiv.textContent = data.message;
+                    fileResultDiv.classList.remove('d-none', 'alert-success');
+                    fileResultDiv.classList.add('alert-danger');
+                }
+            })
+            .catch(error => {
+                isProcessing = false;
+                console.error('Error:', error);
+                fileResultDiv.textContent = 'An error occurred while processing the QR code';
+                fileResultDiv.classList.remove('d-none', 'alert-success');
+                fileResultDiv.classList.add('alert-danger');
+            });
+        };
+        reader.readAsDataURL(file);
+    });
 });
 </script>
 {% endblock %} 

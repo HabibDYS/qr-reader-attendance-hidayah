@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models.user import User
+from app.models.user import Use 
 
 def create_admin_user(username, email, password, name):
     app = create_app()
@@ -24,6 +24,5 @@ if __name__ == '__main__':
     username = input("Enter admin username: ")
     email = input("Enter admin email: ")
     password = input("Enter admin password: ")
-    name = input("Enter admin name: ")
-    
+    name = input("Enter admin name: ") 
     create_admin_user(username, email, password, name) 

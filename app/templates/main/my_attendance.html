@@ -85,25 +85,62 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Status</th>
-                                    <th>Check In</th>
-                                    <th>Check Out</th>
+                                    <th>Check In Time</th>
+                                    <th>Check Out Time</th>
+                                    <th>Duration</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for attendance in attendances %}
                                 <tr>
-                                    <td>{{ attendance.date.strftime('%Y-%m-%d') }}</td>
+                                    <td>
+                                        <strong>{{ attendance.date.strftime('%a, %b %d, %Y') }}</strong>
+                                    </td>
                                     <td>
                                         {% if attendance.status == 'present' %}
-                                            <span class="badge bg-success">Present</span>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>Present
+                                            </span>
                                         {% elif attendance.status == 'late' %}
-                                            <span class="badge bg-warning text-dark">Late</span>
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-exclamation-circle me-1"></i>Late
+                                            </span>
+                                        {% elif attendance.status == 'early_leave' %}
+                                            <span class="badge bg-info text-white">
+                                                <i class="fas fa-sign-out-alt me-1"></i>Early Leave
+                                            </span>
                                         {% else %}
-                                            <span class="badge bg-danger">Absent</span>
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times-circle me-1"></i>Absent
+                                            </span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ attendance.check_in.strftime('%H:%M:%S') if attendance.check_in else '-' }}</td>
-                                    <td>{{ attendance.check_out.strftime('%H:%M:%S') if attendance.check_out else '-' }}</td>
+                                    <td>
+                                        {% if attendance.check_in %}
+                                            <code>{{ attendance.check_in.strftime('%H:%M:%S') }}</code>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.check_out %}
+                                            <code>{{ attendance.check_out.strftime('%H:%M:%S') }}</code>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.check_in and attendance.check_out %}
+                                            {% set duration = attendance.check_out - attendance.check_in %}
+                                            {% set hours = duration.total_seconds() / 3600 %}
+                                            {% set minutes = (duration.total_seconds() % 3600) / 60 %}
+                                            <strong>{{ hours | int }}h {{ minutes | int }}m</strong>
+                                        {% elif attendance.check_in %}
+                                            <span class="badge bg-info">In Progress</span>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

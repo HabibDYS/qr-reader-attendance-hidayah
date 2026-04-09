@@ -60,12 +60,94 @@
                         <h1 class="h2">Dashboard</h1>
                         <div class="btn-toolbar mb-2 mb-md-0">
                             <div class="btn-group me-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary">Share</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+                                <a href="{{ url_for('attendance.scan') }}" class="btn btn-sm btn-primary" title="Quick Attendance Check">
+                                    <i class="fas fa-qrcode me-1"></i>Scan QR
+                                </a>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-                                <i class="fas fa-calendar"></i> This week
-                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Today's Attendance Status -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card border-left-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-clock me-2"></i>Today's Attendance
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if today_attendance %}
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="text-center">
+                                                    <h6 class="text-muted">Check In</h6>
+                                                    {% if today_attendance.check_in %}
+                                                        <h3>
+                                                            <code>{{ today_attendance.check_in.strftime('%H:%M:%S') }}</code>
+                                                        </h3>
+                                                    {% else %}
+                                                        <h3 class="text-muted">—</h3>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="text-center">
+                                                    <h6 class="text-muted">Check Out</h6>
+                                                    {% if today_attendance.check_out %}
+                                                        <h3>
+                                                            <code>{{ today_attendance.check_out.strftime('%H:%M:%S') }}</code>
+                                                        </h3>
+                                                    {% else %}
+                                                        <h3 class="text-muted">—</h3>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="text-center">
+                                                    <h6 class="text-muted">Duration</h6>
+                                                    {% if today_attendance.check_in and today_attendance.check_out %}
+                                                        {% set duration = today_attendance.check_out - today_attendance.check_in %}
+                                                        {% set hours = duration.total_seconds() / 3600 %}
+                                                        {% set minutes = (duration.total_seconds() % 3600) / 60 %}
+                                                        <h3><strong>{{ hours | int }}h {{ minutes | int }}m</strong></h3>
+                                                    {% elif today_attendance.check_in %}
+                                                        <h3 class="text-warning"><i class="fas fa-spinner fa-spin"></i> In Progress</h3>
+                                                    {% else %}
+                                                        <h3 class="text-muted">—</h3>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="text-center">
+                                            <strong>Status:</strong>
+                                            {% if today_attendance.status == 'present' %}
+                                                <span class="badge bg-success fs-6">
+                                                    <i class="fas fa-check-circle me-1"></i>Present
+                                                </span>
+                                            {% elif today_attendance.status == 'late' %}
+                                                <span class="badge bg-warning text-dark fs-6">
+                                                    <i class="fas fa-exclamation-circle me-1"></i>Late
+                                                </span>
+                                            {% elif today_attendance.status == 'early_leave' %}
+                                                <span class="badge bg-info text-white fs-6">
+                                                    <i class="fas fa-sign-out-alt me-1"></i>Early Leave
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger fs-6">
+                                                    <i class="fas fa-times-circle me-1"></i>Absent
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info mb-0">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            No attendance record for today yet.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -149,24 +231,59 @@
                                     <thead>
                                         <tr>
                                             <th>Date</th>
-                                            <th>Check In</th>
-                                            <th>Check Out</th>
+                                            <th>Check In Time</th>
+                                            <th>Check Out Time</th>
+                                            <th>Duration</th>
                                             <th>Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for record in attendance_history %}
                                         <tr>
-                                            <td>{{ record.date.strftime('%Y-%m-%d') }}</td>
-                                            <td>{{ record.check_in.strftime('%H:%M:%S') if record.check_in else 'Not checked in' }}</td>
-                                            <td>{{ record.check_out.strftime('%H:%M:%S') if record.check_out else 'Not checked out' }}</td>
+                                            <td><strong>{{ record.date.strftime('%a, %b %d') }}</strong></td>
+                                            <td>
+                                                {% if record.check_in %}
+                                                    <code class="bg-light p-1 rounded">{{ record.check_in.strftime('%H:%M:%S') }}</code>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if record.check_out %}
+                                                    <code class="bg-light p-1 rounded">{{ record.check_out.strftime('%H:%M:%S') }}</code>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if record.check_in and record.check_out %}
+                                                    {% set duration = record.check_out - record.check_in %}
+                                                    {% set hours = duration.total_seconds() / 3600 %}
+                                                    {% set minutes = (duration.total_seconds() % 3600) / 60 %}
+                                                    <strong>{{ hours | int }}h {{ minutes | int }}m</strong>
+                                                {% elif record.check_in %}
+                                                    <span class="text-warning">In Progress</span>
+                                                {% else %}
+                                                    <span class="text-muted">—</span>
+                                                {% endif %}
+                                            </td>
                                             <td>
                                                 {% if record.status == 'present' %}
-                                                <span class="badge bg-success">Present</span>
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle me-1"></i>Present
+                                                    </span>
                                                 {% elif record.status == 'late' %}
-                                                <span class="badge bg-warning">Late</span>
+                                                    <span class="badge bg-warning text-dark">
+                                                        <i class="fas fa-exclamation-circle me-1"></i>Late
+                                                    </span>
+                                                {% elif record.status == 'early_leave' %}
+                                                    <span class="badge bg-info text-white">
+                                                        <i class="fas fa-sign-out-alt me-1"></i>Early
+                                                    </span>
                                                 {% else %}
-                                                <span class="badge bg-danger">Absent</span>
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times-circle me-1"></i>Absent
+                                                    </span>
                                                 {% endif %}
                                             </td>
                                         </tr>
