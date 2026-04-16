@@ -3,6 +3,7 @@
 Sistem pelacakan kehadiran berbasis Flask yang komprehensif menggunakan kode QR untuk pemeriksaan masuk/keluar siswa. Sistem ini menampilkan portal admin dan siswa terpisah dengan pelacakan kehadiran real-time, pembuatan laporan otomatis, dan manajemen data.
 
 **© 2026 SMK Hidayah. Hak cipta dilindungi.**
+## Sebenernya gk perlu  import excel sih tinggal  jalanin python convert_excel_to_csv.py soalnya aku dah input semuanya tapi gara gara laptop ku gk kuat ya begitu lah
 
 ---
 
@@ -176,7 +177,7 @@ Lembar: 10 TKJ
 ```bash
 python convert_excel_to_csv.py
 ```
-
+## Sebenernya gk perlu sih tinggal  jalanin python convert_excel_to_csv.py soalnya aku dah input semuanya tapi gara gara laptop ku gk kuat ya begitu lah
 **Apa yang dilakukan skrip:**
 1. Membaca semua lembar dari file Excel (misalnya, "Data Siswa 10.11.12 TA. 2026.xlsx")
 2. Mengekstrak nama siswa dari setiap lembar
