@@ -124,7 +124,6 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Check In</th>
-                                    <th>Check Out</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -133,7 +132,6 @@
                                 <tr>
                                     <td>{{ record.date.strftime('%Y-%m-%d') }}</td>
                                     <td>{{ record.check_in.strftime('%H:%M:%S') if record.check_in else 'N/A' }}</td>
-                                    <td>{{ record.check_out.strftime('%H:%M:%S') if record.check_out else 'N/A' }}</td>
                                     <td>
                                         {% if record.status == 'present' %}
                                             <span class="badge bg-success">Present</span>

@@ -36,7 +36,6 @@
                                     <th>Date</th>
                                     <th>Student Name</th>
                                     <th>Check In</th>
-                                    <th>Check Out</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
@@ -46,7 +45,6 @@
                                     <td>{{ record.date.strftime('%Y-%m-%d') }}</td>
                                     <td>{{ record.user.name }}</td>
                                     <td>{{ record.check_in.strftime('%H:%M') if record.check_in else 'Not checked in' }}</td>
-                                    <td>{{ record.check_out.strftime('%H:%M') if record.check_out else 'Not checked out' }}</td>
                                     <td>
                                         <span class="badge {% if record.status == 'Present' %}bg-success{% elif record.status == 'Late' %}bg-warning{% else %}bg-danger{% endif %}">
                                             {{ record.status }}

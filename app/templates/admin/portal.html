@@ -91,9 +91,6 @@
                             </div>
                             <p class="mb-1">
                                 Check-in: {{ attendance.check_in.strftime('%H:%M') if attendance.check_in else 'Not checked in' }}
-                                {% if attendance.check_out %}
-                                | Check-out: {{ attendance.check_out.strftime('%H:%M') }}
-                                {% endif %}
                             </p>
                         </div>
                         {% endfor %}

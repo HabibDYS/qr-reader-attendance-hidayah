@@ -16,9 +16,6 @@
                         <button id="checkInBtn" class="btn btn-primary me-2" onclick="markAttendance('check-in')" disabled>
                             <i class="fas fa-sign-in-alt"></i> Check In
                         </button>
-                        <button id="checkOutBtn" class="btn btn-success" onclick="markAttendance('check-out')" disabled>
-                            <i class="fas fa-sign-out-alt"></i> Check Out
-                        </button>
                     </div>
                 </div>
             </div>
@@ -59,7 +56,6 @@ function onScanSuccess(decodedText, decodedResult) {
         
         lastScannedUsername = data.username;
         document.getElementById('checkInBtn').disabled = false;
-        document.getElementById('checkOutBtn').disabled = false;
         
         showResult(`QR Code scanned successfully. Student: ${data.username}`);
         
@@ -101,7 +97,7 @@ function markAttendance(action) {
         return;
     }
     
-    const button = action === 'check-in' ? document.getElementById('checkInBtn') : document.getElementById('checkOutBtn');
+    const button = document.getElementById('checkInBtn');
     button.disabled = true;
     
     fetch('/admin/mark-attendance', {
@@ -120,7 +116,6 @@ function markAttendance(action) {
             showResult(data.message);
             // Reset buttons after successful marking
             document.getElementById('checkInBtn').disabled = true;
-            document.getElementById('checkOutBtn').disabled = true;
             lastScannedUsername = null;
         } else {
             showError(data.message);

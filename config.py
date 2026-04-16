@@ -20,7 +20,7 @@ class Config:
     # Attendance configuration
     LATE_THRESHOLD_HOUR = 7  # 7:00 AM Jakarta time - attendance after this is marked as late
     LATE_THRESHOLD_MINUTE = 0
-    EARLY_LEAVE_THRESHOLD_HOUR = 15  # 5:00 PM
+    # EARLY_LEAVE_THRESHOLD_HOUR = 15  # 5:00 PM
     EARLY_LEAVE_THRESHOLD_MINUTE = 0
     
     # Application settings

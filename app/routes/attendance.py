@@ -65,17 +65,7 @@ def process_qr():
                 db.session.rollback()
                 # Someone else might have created the record, try again
                 attendance = Attendance.query.filter_by(user_id=user.id, date=today).first()
-                if attendance and attendance.check_in and not attendance.check_out:
-                    # The other request was a check-out, so proceed with check-out
-                    attendance.check_out = current_time
-                    attendance.update_status()
-                    db.session.commit()
-                    return jsonify({
-                        'success': True,
-                        'message': f'Check-out recorded for {user.name} at {current_time.strftime("%H:%M:%S")}',
-                        'type': 'checkout'
-                    })
-                elif attendance and not attendance.check_in:
+                if attendance and not attendance.check_in:
                     # Try to set check-in again
                     attendance.check_in = current_time
                     db.session.commit()
@@ -90,22 +80,11 @@ def process_qr():
                 'message': f'Check-in recorded for {user.name} at {current_time.strftime("%H:%M:%S")}',
                 'type': 'checkin'
             })
-        elif attendance.check_in and not attendance.check_out:
-            # Second scan - record check-out
-            attendance.check_out = current_time
-            attendance.update_status()
-            db.session.commit()
-            
-            return jsonify({
-                'success': True,
-                'message': f'Check-out recorded for {user.name} at {current_time.strftime("%H:%M:%S")}',
-                'type': 'checkout'
-            })
-        elif attendance.check_in and attendance.check_out:
-            # Attendance already completed
+        elif attendance.check_in:
+            # Already checked in today
             return jsonify({
                 'success': False,
-                'message': f'Attendance already completed for {user.name} today'
+                'message': f'Already checked in for {user.name} today'
             })
         else:
             # Shouldn't happen, but handle it

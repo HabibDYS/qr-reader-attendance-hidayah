@@ -181,7 +181,6 @@ def export_attendance():
                 'Nama Siswa': current_user.name,
                 'Username': current_user.username,
                 'Check-In': record.check_in.strftime('%H:%M:%S') if record.check_in else 'N/A',
-                'Check-Out': record.check_out.strftime('%H:%M:%S') if record.check_out else 'N/A',
                 'Status': record.status
             })
         

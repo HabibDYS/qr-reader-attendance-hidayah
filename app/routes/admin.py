@@ -252,7 +252,7 @@ def mark_attendance():
         username = data['username']
         action = data['action']
 
-        if action not in ['check-in', 'check-out']:
+        if action not in ['check-in']:
             return jsonify({'success': False, 'message': 'Invalid action'}), 400
 
         user = User.query.filter_by(username=username).first()
@@ -279,13 +279,6 @@ def mark_attendance():
                 return jsonify({'success': False, 'message': 'Already checked in today'}), 400
             attendance.check_in = current_time
             message = f'Check-in recorded for {user.name}'
-        else:  # check-out
-            if not attendance.check_in:
-                return jsonify({'success': False, 'message': 'Must check in before checking out'}), 400
-            if attendance.check_out:
-                return jsonify({'success': False, 'message': 'Already checked out today'}), 400
-            attendance.check_out = current_time
-            message = f'Check-out recorded for {user.name}'
 
         attendance.update_status()
         db.session.commit()

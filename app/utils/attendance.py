@@ -12,7 +12,7 @@ def mark_attendance(username, check_type='check_in'):
     
     Args:
         username (str): The username of the student
-        check_type (str): Either 'check_in' or 'check_out'
+        check_type (str): Only 'check_in' is supported
     
     Returns:
         tuple: (success, message)
@@ -43,15 +43,8 @@ def mark_attendance(username, check_type='check_in'):
             attendance.check_in = datetime.now()
             message = "Check-in recorded successfully"
             
-        else:  # check_out
-            if not attendance or not attendance.check_in:
-                return False, "No check-in record found for today"
-                
-            if attendance.check_out:
-                return False, "Check-out already recorded for today"
-                
-            attendance.check_out = datetime.now()
-            message = "Check-out recorded successfully"
+        else:
+            return False, "Check-out is disabled"
         
         db.session.commit()
         return True, message
